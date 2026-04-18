@@ -40,12 +40,12 @@ export default function FirstAction({ onAction, onSkip }: FirstActionProps) {
             </motion.div>
 
             <h2 className="font-display text-[20px] font-bold tracking-[-0.03em] text-[#111111] mb-2">
-              Masz jedną rzecz do zatwierdzenia
+              Zacznij od pierwszej akcji
             </h2>
             <p className="font-sans text-[14px] text-[#6B7280] leading-relaxed mb-6">
-              Logo w wersji 3 czeka na Twoją akceptację.
+              Czeka na Ciebie design do zatwierdzenia.
               <br />
-              Zajmie to dosłownie sekundę.
+              Zajmie to dosłownie chwilę.
             </p>
 
             <div className="flex flex-col gap-2.5">
@@ -53,7 +53,7 @@ export default function FirstAction({ onAction, onSkip }: FirstActionProps) {
                 onClick={onAction}
                 className="group w-full inline-flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#000000] text-white font-sans text-[14px] font-medium px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-200"
               >
-                Pokaż mi logo
+                Przejdź do Design Review
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" strokeWidth={2} />
               </button>
               <button

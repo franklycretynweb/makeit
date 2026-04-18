@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import SmoothScrollProvider from "@/components/SmoothScrollProvider";
+import LazyMotionProvider from "@/components/LazyMotionProvider";
 
 const satoshi = localFont({
   src: [
@@ -41,7 +42,9 @@ export default function RootLayout({
       className={`${satoshi.variable} ${cabinetGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <LazyMotionProvider>
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        </LazyMotionProvider>
       </body>
     </html>
   );

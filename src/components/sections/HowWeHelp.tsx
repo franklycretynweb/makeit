@@ -10,6 +10,7 @@ import cameraImg from "../../../public/services/camera_third.webp";
 const services = [
   {
     image: codeImg,
+    href: "/uslugi/web-design",
     label: "Strony i sklepy",
     title: "Web Design",
     description: "Projektujemy i budujemy strony, które konwertują. Od wizytówki po e-commerce.",
@@ -23,6 +24,7 @@ const services = [
   {
     image: rocketImg,
     label: "Social i treści",
+    href: "/uslugi/social-media",
     title: "Social Media",
     description: "Tworzymy content, który buduje markę i generuje mierzalne wyniki sprzedaży.",
     glowColor: "rgba(107, 78, 255, 0.4)", // Purple glow
@@ -34,6 +36,7 @@ const services = [
   },
   {
     image: cameraImg,
+    href: "/uslugi/foto-wideo",
     label: "Foto i wideo",
     title: "Fotografia",
     description: "Profesjonalne zdjęcia produktowe, sesje wizerunkowe i filmy, które przykuwają uwagę.",
@@ -76,7 +79,7 @@ export default function HowWeHelp() {
   const titleWords = title.split(" ");
 
   return (
-    <section className="bg-[#F9F9F9] py-32 px-6 relative overflow-hidden">
+    <section id="dlaczego-make-it" className="bg-[#F9F9F9] py-32 px-6 relative overflow-hidden">
       {/* Bardzo delikatne, gigantyczne tła oświetlające całą sekcję */}
       <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#4EA8FF] opacity-[0.04] blur-[80px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#9B66FF] opacity-[0.04] blur-[80px] rounded-full pointer-events-none" />
@@ -121,7 +124,7 @@ export default function HowWeHelp() {
               className="group flex flex-col gap-6"
             >
               {/* Image Container - Białokarta z obrazkiem wewnątrz */}
-              <div className="relative w-full aspect-square rounded-[40px] bg-[#FFFFFF] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-[#EAEAEA] group-hover:border-[#E5E5E5] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 transform group-hover:-translate-y-2 p-4">
+              <a href={s.href} className="relative w-full aspect-square rounded-[40px] bg-[#FFFFFF] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-[#EAEAEA] group-hover:border-[#E5E5E5] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 transform group-hover:-translate-y-2 p-4 block">
                 
                 {/* Opcjonalny Glow zza obrazka na hover (nawiązanie do Drewl) */}
                 <div 
@@ -143,7 +146,7 @@ export default function HowWeHelp() {
                   {/* Subtle vignette/overlay for better contrast when colorless */}
                   <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
                 </div>
-              </div>
+              </a>
 
               {/* Content under the image */}
               <div className="flex flex-col px-2 mt-2">

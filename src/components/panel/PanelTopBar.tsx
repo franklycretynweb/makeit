@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const pageNames: Record<string, string> = {
   "/panel": "Dashboard",
@@ -19,6 +21,29 @@ const pageNames: Record<string, string> = {
 export default function PanelTopBar() {
   const pathname = usePathname();
   const pageName = pageNames[pathname] || "Panel";
+  const [displayName, setDisplayName] = useState("");
+  const [initials, setInitials] = useState("?");
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_name")
+        .eq("id", user.id)
+        .single();
+
+      const name = profile?.company_name ?? user.email ?? "";
+      const short = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+      const label = name.split(" ")[0] ?? name;
+      setDisplayName(label);
+      setInitials(short || "?");
+    };
+    load();
+  }, []);
 
   return (
     <header className="h-[56px] px-8 flex items-center justify-between shrink-0 border-b border-[#EBEBEB] bg-[#F7F7F8]">
@@ -48,12 +73,14 @@ export default function PanelTopBar() {
 
         <div className="w-px h-4 bg-[#EBEBEB] mx-1" />
 
-        <button className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-black/[0.04] transition-all duration-150">
+        <Link href="/panel/konto" className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-black/[0.04] transition-all duration-150">
           <div className="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center">
-            <span className="font-sans text-[8px] font-bold text-white">KB</span>
+            <span className="font-sans text-[8px] font-bold text-white">{initials}</span>
           </div>
-          <span className="font-sans text-[13px] font-medium text-[#333333]">Kuchciak</span>
-        </button>
+          {displayName && (
+            <span className="font-sans text-[13px] font-medium text-[#333333]">{displayName}</span>
+          )}
+        </Link>
       </div>
     </header>
   );

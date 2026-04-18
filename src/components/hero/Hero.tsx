@@ -151,14 +151,14 @@ export default function Hero() {
         {/* CTAs - Refined to match Drewl (smaller, better shadows/borders) */}
         <motion.div {...fadeUp(0.8)} className="flex items-center justify-center gap-4 mb-16 z-10">
           <a
-            href="#uslugi"
+            href="#dlaczego-make-it"
             className="group relative inline-flex h-[44px] items-center justify-center overflow-hidden rounded-full bg-white px-6 font-sans text-[14px] font-medium text-[#111111] transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E5E5] hover:border-[#D0D0D0] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
           >
             <span className="relative z-10">Dlaczego Make it?</span>
           </a>
-          
+
           <a
-            href="#kontakt"
+            href="/pakiety"
             className="group relative inline-flex h-[44px] items-center justify-center overflow-hidden rounded-full bg-[#111111] px-6 font-sans text-[14px] font-medium text-white transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:bg-[#000000]"
           >
             <span className="relative z-10">Zacznij projekt</span>

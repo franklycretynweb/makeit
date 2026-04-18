@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
+import logoSrc from "../../public/logo/logo_makeit.webp";
 
 import codeImg from "../../public/services/code_first.webp";
 import rocketImg from "../../public/services/rocket_second.webp";
@@ -10,6 +11,7 @@ import cameraImg from "../../public/services/camera_third.webp";
 const navLinks = [
   { label: "O nas", href: "/onas" },
   { label: "Usługi", href: "#uslugi", hasDropdown: true },
+  { label: "Pakiety", href: "/pakiety" },
   { label: "Projekty", href: "#projekty" },
   { label: "Kontakt", href: "#kontakt" },
 ];
@@ -106,11 +108,14 @@ export default function Nav() {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300">
         {/* Wordmark logo */}
-        <a href="/" className="flex items-center gap-2 group">
-          <div className="w-6 h-6 border-2 border-[#111111] rounded-full group-hover:scale-105 transition-transform duration-200" />
-          <span className="font-sans font-bold text-[#111111] text-[17px] tracking-tight select-none">
-            make it.
-          </span>
+        <a href="/" className="flex items-center group">
+          <Image
+            src={logoSrc}
+            alt="make it."
+            className="h-8 w-auto object-contain group-hover:opacity-80 transition-opacity duration-200"
+            height={32}
+            priority
+          />
         </a>
 
         {/* Links */}
@@ -169,7 +174,7 @@ export default function Nav() {
 
           {/* Electric Border Button */}
           <a
-            href="#kontakt"
+            href="/pakiety"
             className="relative inline-flex h-10 overflow-hidden rounded-full p-[2px] group focus:outline-none focus:ring-2 focus:ring-[#6B4EFF] focus:ring-offset-2 focus:ring-offset-[#FCFCFD]"
           >
             <span className="absolute inset-[-1000%] animate-[spin_2.5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#111111_0%,#111111_45%,#4EA8FF_65%,#9B66FF_90%,#FFFFFF_100%)] group-hover:bg-[conic-gradient(from_90deg_at_50%_50%,#4EA8FF_0%,#9B66FF_50%,#4EA8FF_100%)] transition-all duration-500" />

@@ -1,50 +1,58 @@
 "use client";
 
-import { Check, Pencil, FileText, Palette, Rocket } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Pencil, FileText, Palette, Rocket, MessageSquare, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import { getProjectForUser } from "@/lib/utils/project";
+import { timeAgo } from "@/lib/utils/timeAgo";
 
-const events = [
-  {
-    icon: Check,
-    title: "Projekt logo zaakceptowany",
-    description: "Wersja 3 zatwierdzona — przechodzimy do wdrożenia.",
-    time: "2 godz. temu",
-    author: "Mateusz B.",
-  },
-  {
-    icon: Pencil,
-    title: "Dodano 3 nowe mockupy",
-    description: "Podstrony /usługi, /o-nas, /kontakt gotowe do przeglądu.",
-    time: "wczoraj, 16:40",
-    author: "Mateusz B.",
-  },
-  {
-    icon: FileText,
-    title: "Kontrakt podpisany",
-    description: "Umowa podpisana elektronicznie.",
-    time: "3 dni temu",
-    author: "Kuchciak Budownictwo",
-  },
-  {
-    icon: Palette,
-    title: "Wybrano paletę kolorów",
-    description: "Granatowy #1B3A6B jako kolor główny, akcent pomarańczowy.",
-    time: "5 dni temu",
-    author: "Mateusz B.",
-  },
-  {
-    icon: Rocket,
-    title: "Projekt rozpoczęty",
-    description: "Kick-off call zakończony. Discovery phase w toku.",
-    time: "12 kwi 2026",
-    author: "make it",
-  },
-];
+type EventType = "message" | "file" | "invoice" | "request" | "decision" | "design";
+
+interface ActivityEvent {
+  id: string;
+  event_type: EventType;
+  title: string;
+  description: string;
+  author: string;
+  created_at: string;
+}
+
+const eventIcon: Record<EventType, typeof Check> = {
+  message: MessageSquare,
+  file: FileText,
+  invoice: CreditCard,
+  request: Pencil,
+  decision: Check,
+  design: Palette,
+};
 
 // Opacity cascade: newest is full weight, older entries fade naturally
 const opacities = [1, 0.85, 0.65, 0.5, 0.38];
 
 export default function ActivityFeed() {
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const project = await getProjectForUser(supabase);
+      if (!project) return;
+
+      const { data } = await supabase
+        .from("activity_events")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      setEvents(data ?? []);
+    };
+    load();
+  }, []);
+
+  if (events.length === 0) return null;
+
   return (
     <div className="rounded-xl border border-[#EBEBEB] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
       {/* Header */}
@@ -62,14 +70,14 @@ export default function ActivityFeed() {
         <div className="absolute left-[34px] top-5 bottom-5 w-px bg-[#EFEFEF]" />
 
         {events.map((event, i) => {
-          const Icon = event.icon;
+          const Icon = eventIcon[event.event_type] ?? Rocket;
           const isLatest = i === 0;
 
           return (
             <motion.li
-              key={i}
+              key={event.id}
               initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: opacities[i], y: 0 }}
+              animate={{ opacity: opacities[i] ?? 0.3, y: 0 }}
               transition={{
                 delay: 0.05 * i,
                 duration: 0.35,
@@ -79,7 +87,6 @@ export default function ActivityFeed() {
             >
               {/* Icon marker */}
               {isLatest ? (
-                // Latest event: filled black circle — signals "this just happened"
                 <div className="absolute left-0 top-[13px] w-[22px] h-[22px] rounded-full bg-[#111111] flex items-center justify-center">
                   <Icon size={10} strokeWidth={2.5} color="#ffffff" />
                 </div>
@@ -89,7 +96,7 @@ export default function ActivityFeed() {
                 </div>
               )}
 
-              {/* Content — single column, reading order: title → description → meta */}
+              {/* Content */}
               <p
                 className={`font-sans leading-snug ${
                   isLatest
@@ -103,7 +110,7 @@ export default function ActivityFeed() {
                 {event.description}
               </p>
               <p className="font-sans text-[11px] text-[#AAAAAA] mt-1.5">
-                {event.author} · {event.time}
+                {event.author} · {timeAgo(event.created_at)}
               </p>
             </motion.li>
           );

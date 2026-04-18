@@ -1,27 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Upload, Palette, Type, Image as ImageIcon } from "lucide-react";
 import FileCard from "@/components/panel/files/FileCard";
+import { createClient } from "@/lib/supabase/client";
 
-const filters = ["Wszystkie", "Logo", "Strona", "Faktury", "Inne"] as const;
+const FILTERS = ["Wszystkie", "Logo", "Strona", "Faktury", "Inne"] as const;
+type Filter = (typeof FILTERS)[number];
 
-const files = [
-  { name: "Logo Kuchciak — v3.svg", type: "svg", size: "48 KB", date: "14 kwi", isNew: true, category: "Logo" },
-  { name: "Logo Kuchciak — dark.svg", type: "svg", size: "42 KB", date: "14 kwi", isNew: true, category: "Logo" },
-  { name: "Hero section — desktop.webp", type: "webp", size: "320 KB", date: "13 kwi", isNew: true, preview: "/portfolio/kuchciak.webp", category: "Strona" },
-  { name: "Podstrona /uslugi — mockup.webp", type: "webp", size: "285 KB", date: "12 kwi", preview: "/portfolio/kuchciakoze.webp", category: "Strona" },
-  { name: "Brief projektowy.pdf", type: "pdf", size: "1.2 MB", date: "8 kwi", category: "Inne" },
-  { name: "Kontrakt — podpisany.pdf", type: "pdf", size: "890 KB", date: "8 kwi", category: "Faktury" },
-  { name: "Faktura #001.pdf", type: "pdf", size: "340 KB", date: "8 kwi", category: "Faktury" },
-  { name: "Projekt Figma — eksport.figma", type: "figma", size: "—", date: "11 kwi", category: "Strona" },
-  { name: "Zdjęcia budowy — pack.zip", type: "zip", size: "24 MB", date: "6 kwi", category: "Inne" },
-];
+interface DBFile {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  storage_path: string;
+  category: string;
+  is_new: boolean;
+  uploaded_at: string;
+}
+
+interface FileCardData {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  date: string;
+  category: string;
+  isNew: boolean;
+  preview?: string;
+  downloadUrl?: string;
+}
 
 const brandAssets = [
   { icon: Palette, label: "Paleta kolorów", sub: "#1B3A6B · #F97316 · #F5F5F5" },
-  { icon: Type, label: "Typografia", sub: "Inter · Cabinet Grotesk" },
+  { icon: Type,    label: "Typografia",     sub: "Inter · Cabinet Grotesk" },
   { icon: ImageIcon, label: "Logo (3 warianty)", sub: "SVG · PNG · dark · light" },
 ];
 
@@ -31,12 +44,111 @@ const fadeUp = (delay: number) => ({
   transition: { duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
 
-export default function PlikiPage() {
-  const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("Wszystkie");
+const IMAGE_TYPES = ["webp", "jpg", "jpeg", "png", "gif"];
+const BUCKET = "files";
 
-  const filtered = activeFilter === "Wszystkie"
-    ? files
-    : files.filter((f) => f.category === activeFilter);
+export default function PlikiPage() {
+  const [files, setFiles] = useState<FileCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("");
+  const [activeFilter, setActiveFilter] = useState<Filter>("Wszystkie");
+  const [search, setSearch] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
+
+  const fetchFiles = async (projId: string) => {
+    const { data } = await supabase
+      .from("files")
+      .select("*")
+      .eq("project_id", projId)
+      .order("uploaded_at", { ascending: false });
+
+    if (!data) return;
+
+    const mapped: FileCardData[] = data.map((f: DBFile) => {
+      const isImage = IMAGE_TYPES.includes(f.type.toLowerCase());
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(f.storage_path);
+      return {
+        id: f.id,
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        date: new Date(f.uploaded_at).toLocaleDateString("pl-PL", { day: "numeric", month: "short" }),
+        category: f.category,
+        isNew: f.is_new,
+        preview: isImage ? urlData.publicUrl : undefined,
+        downloadUrl: urlData.publicUrl,
+      };
+    });
+
+    setFiles(mapped);
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id, name")
+        .eq("client_id", user.id)
+        .single();
+
+      if (!project) { setLoading(false); return; }
+      setProjectId(project.id);
+      setProjectName(project.name);
+      await fetchFiles(project.id);
+      setLoading(false);
+    };
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !projectId) return;
+    setUploading(true);
+
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${projectId}/${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { upsert: false });
+
+    if (uploadError) {
+      alert("Błąd uploadu: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const sizeStr = file.size > 1048576
+      ? `${(file.size / 1048576).toFixed(1)} MB`
+      : `${Math.round(file.size / 1024)} KB`;
+
+    await supabase.from("files").insert({
+      project_id: projectId,
+      name: file.name,
+      type: ext,
+      size: sizeStr,
+      storage_path: path,
+      category: "Inne",
+      is_new: true,
+    });
+
+    await fetchFiles(projectId);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const filtered = files.filter((f) => {
+    const matchCat = activeFilter === "Wszystkie" || f.category === activeFilter;
+    const matchSearch = f.name.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,26 +159,36 @@ export default function PlikiPage() {
           Pliki & Deliverables
         </h1>
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#AAAAAA]" strokeWidth={1.75} />
             <input
               type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Szukaj pliku..."
               className="font-sans text-[13px] pl-9 pr-4 py-2 border border-[#EBEBEB] rounded-lg w-[200px] focus:outline-none focus:border-[#AAAAAA] focus:w-[240px] bg-white transition-all duration-300 placeholder:text-[#CCCCCC] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
             />
           </div>
-          {/* Upload */}
-          <button className="flex items-center gap-2 bg-[#111111] hover:bg-[#2a2a2a] text-white font-sans text-[13px] font-medium px-4 py-2 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all duration-150">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-2 bg-[#111111] hover:bg-[#2a2a2a] text-white font-sans text-[13px] font-medium px-4 py-2 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all duration-150 disabled:opacity-50"
+          >
             <Upload className="w-3.5 h-3.5" strokeWidth={2} />
-            Prześlij
+            {uploading ? "Przesyłanie..." : "Prześlij"}
           </button>
         </div>
       </motion.div>
 
       {/* Filters */}
       <motion.div {...fadeUp(0.04)} className="flex gap-1.5">
-        {filters.map((f) => (
+        {FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
@@ -83,42 +205,55 @@ export default function PlikiPage() {
 
       {/* File grid */}
       <motion.div {...fadeUp(0.08)}>
-        <div className="grid grid-cols-3 gap-4">
-          {filtered.map((file) => (
-            <FileCard key={file.name} {...file} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="rounded-xl bg-[#F0F0F0] aspect-[4/3] animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="font-sans text-[14px] text-[#AAAAAA]">
+              {search ? `Brak plików pasujących do "${search}"` : "Brak plików w tej kategorii."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {filtered.map((file) => (
+              <FileCard
+                key={file.id}
+                name={file.name}
+                type={file.type}
+                size={file.size}
+                date={file.date}
+                isNew={file.isNew}
+                preview={file.preview}
+                downloadUrl={file.downloadUrl}
+              />
+            ))}
+          </div>
+        )}
       </motion.div>
 
-      {/* Brand Assets — clean white card */}
+      {/* Brand Assets */}
       <motion.div {...fadeUp(0.12)}>
         <div className="rounded-xl border border-[#EBEBEB] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F5F5F5]">
-            <h2 className="font-sans text-[13px] font-semibold text-[#111111]">
-              Brand Assets
-            </h2>
+            <h2 className="font-sans text-[13px] font-semibold text-[#111111]">Brand Assets</h2>
             <p className="font-sans text-[12px] text-[#AAAAAA] mt-0.5">
-              Zasoby marki Kuchciak Budownictwo
+              Zasoby marki {projectName || "projektu"}
             </p>
           </div>
-
           <div className="grid grid-cols-3 divide-x divide-[#F5F5F5]">
             {brandAssets.map((asset) => {
               const Icon = asset.icon;
               return (
-                <div
-                  key={asset.label}
-                  className="p-5 hover:bg-[#FAFAFA] transition-colors duration-150 cursor-pointer group"
-                >
+                <div key={asset.label} className="p-5 hover:bg-[#FAFAFA] transition-colors duration-150 cursor-pointer group">
                   <div className="w-9 h-9 rounded-lg bg-[#F5F5F5] border border-[#EBEBEB] flex items-center justify-center mb-3 group-hover:border-[#CCCCCC] transition-colors duration-150">
                     <Icon size={16} strokeWidth={1.75} color="#555555" />
                   </div>
-                  <p className="font-sans text-[13px] font-medium text-[#111111]">
-                    {asset.label}
-                  </p>
-                  <p className="font-sans text-[11px] text-[#AAAAAA] mt-0.5">
-                    {asset.sub}
-                  </p>
+                  <p className="font-sans text-[13px] font-medium text-[#111111]">{asset.label}</p>
+                  <p className="font-sans text-[11px] text-[#AAAAAA] mt-0.5">{asset.sub}</p>
                 </div>
               );
             })}

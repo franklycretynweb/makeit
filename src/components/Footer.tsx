@@ -1,3 +1,6 @@
+import Image from "next/image";
+import logoSrc from "../../public/logo/logo_makeit.webp";
+
 const footerLinks = {
   Strony: [
     { label: "O nas", href: "#o-nas" },
@@ -36,11 +39,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand col */}
           <div className="lg:col-span-2">
-            <a href="/" className="inline-flex items-center gap-2 group mb-5">
-              <div className="w-5 h-5 border-2 border-[#111111] rounded-full group-hover:scale-105 transition-transform duration-200" />
-              <span className="font-sans font-bold text-[#111111] text-[17px] tracking-tight">
-                make it.
-              </span>
+            <a href="/" className="inline-flex items-center group mb-5">
+              <Image
+                src={logoSrc}
+                alt="make it."
+                className="h-7 w-auto object-contain group-hover:opacity-80 transition-opacity duration-200"
+                height={28}
+              />
             </a>
             <p className="font-sans text-sm text-[#666666] leading-relaxed mb-8 max-w-xs">
               Projektujemy obecność, która sprzedaje. Strony, social media, zdjęcia i wideo — wszystko w jednym miejscu.

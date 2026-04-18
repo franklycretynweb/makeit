@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, Check, Clock, Inbox } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { getProjectForUser } from "@/lib/utils/project";
 
 interface Request {
   id: string;
@@ -10,29 +12,15 @@ interface Request {
   description: string;
   page: string;
   priority: "normal" | "urgent";
-  date: string;
+  status: "new" | "progress" | "done";
+  created_at: string;
 }
 
-const initialData: Record<string, Request[]> = {
-  new: [
-    { id: "1", title: "Zmień tekst na hero", description: "Nagłówek powinien brzmieć: \"Budujemy solidnie od 2005 roku\"", page: "Strona główna", priority: "normal", date: "14 kwi" },
-    { id: "2", title: "Dodaj numer telefonu w footerze", description: "Brakuje kontaktowego numeru telefonu w stopce.", page: "Wszystkie", priority: "urgent", date: "13 kwi" },
-  ],
-  progress: [
-    { id: "3", title: "Nowy baner — promocja wiosenna", description: "Baner 1920×600 z informacją o rabacie -15% na usługi dachowe.", page: "Strona główna", priority: "normal", date: "11 kwi" },
-  ],
-  done: [
-    { id: "4", title: "Aktualizacja menu nawigacji", description: "Dodanie zakładki \"Realizacje\" w menu głównym.", page: "Wszystkie", priority: "normal", date: "8 kwi" },
-    { id: "5", title: "Poprawka literówki /o-nas", description: "\"Budownictow\" → \"Budownictwo\" w sekcji O nas.", page: "/o-nas", priority: "normal", date: "7 kwi" },
-    { id: "6", title: "Nowe zdjęcia realizacji", description: "Dodanie 4 nowych zdjęć budowy domku w Niepołomicach.", page: "/realizacje", priority: "normal", date: "5 kwi" },
-  ],
-};
-
 const columns = [
-  { key: "new",      label: "Nowe",   icon: Inbox,  count: initialData.new.length },
-  { key: "progress", label: "W toku", icon: Clock,  count: initialData.progress.length },
-  { key: "done",     label: "Gotowe", icon: Check,  count: initialData.done.length },
-] as const;
+  { key: "new" as const,      label: "Nowe",   icon: Inbox  },
+  { key: "progress" as const, label: "W toku", icon: Clock  },
+  { key: "done" as const,     label: "Gotowe", icon: Check  },
+];
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 12 } as const,
@@ -40,10 +28,93 @@ const fadeUp = (delay: number) => ({
   transition: { duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
 
+function fmtDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+}
+
 export default function ZgloszeniaPage() {
   const [showModal, setShowModal] = useState(false);
-  const [data] = useState(initialData);
+  const [data, setData] = useState<Record<"new" | "progress" | "done", Request[]>>({
+    new: [],
+    progress: [],
+    done: [],
+  });
   const [priority, setPriority] = useState<"normal" | "urgent">("normal");
+  const [submitting, setSubmitting] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descRef = useRef<HTMLTextAreaElement>(null);
+  const pageRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const project = await getProjectForUser(supabase);
+      if (!project) return;
+
+      setProjectId(project.id);
+      setCompanyName(project.name ?? "");
+
+      const { data: rows } = await supabase
+        .from("requests")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("created_at", { ascending: false });
+
+      const grouped: Record<"new" | "progress" | "done", Request[]> = {
+        new: [],
+        progress: [],
+        done: [],
+      };
+      for (const row of rows ?? []) {
+        if (row.status in grouped) {
+          grouped[row.status as "new" | "progress" | "done"].push(row as Request);
+        }
+      }
+      setData(grouped);
+    };
+    load();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!projectId) return;
+    const title = titleRef.current?.value.trim();
+    const description = descRef.current?.value.trim() ?? "";
+    const page = pageRef.current?.value ?? "Strona główna";
+    if (!title) return;
+
+    setSubmitting(true);
+    const supabase = createClient();
+
+    const { data: inserted, error } = await supabase
+      .from("requests")
+      .insert({ project_id: projectId, title, description, page, priority, status: "new" })
+      .select()
+      .single();
+
+    if (!error && inserted) {
+      // Insert activity event
+      await supabase.from("activity_events").insert({
+        project_id: projectId,
+        event_type: "request",
+        title: `Nowe zgłoszenie: ${title}`,
+        description: `Strona: ${page} · Priorytet: ${priority === "urgent" ? "pilne" : "normalny"}`,
+        author: companyName,
+      });
+
+      setData((prev) => ({
+        ...prev,
+        new: [inserted as Request, ...prev.new],
+      }));
+      setShowModal(false);
+      setPriority("normal");
+      if (titleRef.current) titleRef.current.value = "";
+      if (descRef.current) descRef.current.value = "";
+    }
+    setSubmitting(false);
+  };
 
   const total = Object.values(data).flat().length;
 
@@ -136,7 +207,7 @@ export default function ZgloszeniaPage() {
                           {req.page}
                         </span>
                         <span className="font-sans text-[11px] text-[#BBBBBB] shrink-0">
-                          {req.date}
+                          {fmtDate(req.created_at)}
                         </span>
                       </div>
                     </div>
@@ -196,6 +267,7 @@ export default function ZgloszeniaPage() {
                     Co chcesz zmienić?
                   </label>
                   <input
+                    ref={titleRef}
                     type="text"
                     placeholder="Krótki tytuł zmiany..."
                     className="font-sans text-[14px] border border-[#EBEBEB] rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-[#AAAAAA] transition-colors placeholder:text-[#CCCCCC]"
@@ -208,6 +280,7 @@ export default function ZgloszeniaPage() {
                     Opisz szczegółowo
                   </label>
                   <textarea
+                    ref={descRef}
                     rows={3}
                     placeholder="Co dokładnie i gdzie powinno się zmienić..."
                     className="font-sans text-[14px] border border-[#EBEBEB] rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-[#AAAAAA] transition-colors placeholder:text-[#CCCCCC] resize-none"
@@ -219,7 +292,10 @@ export default function ZgloszeniaPage() {
                   <label className="font-sans text-[12px] font-semibold text-[#555555]">
                     Podstrona
                   </label>
-                  <select className="font-sans text-[14px] border border-[#EBEBEB] rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-[#AAAAAA] transition-colors bg-white text-[#111111] cursor-pointer">
+                  <select
+                    ref={pageRef}
+                    className="font-sans text-[14px] border border-[#EBEBEB] rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-[#AAAAAA] transition-colors bg-white text-[#111111] cursor-pointer"
+                  >
                     <option>Strona główna</option>
                     <option>/uslugi</option>
                     <option>/o-nas</option>
@@ -262,8 +338,12 @@ export default function ZgloszeniaPage() {
 
               {/* Submit */}
               <div className="px-6 pb-5">
-                <button className="w-full bg-[#111111] hover:bg-[#2a2a2a] text-white font-sans text-[14px] font-medium py-2.5 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all duration-150">
-                  Wyślij zgłoszenie
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="w-full bg-[#111111] hover:bg-[#2a2a2a] disabled:opacity-50 text-white font-sans text-[14px] font-medium py-2.5 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all duration-150"
+                >
+                  {submitting ? "Wysyłanie..." : "Wyślij zgłoszenie"}
                 </button>
               </div>
             </motion.div>

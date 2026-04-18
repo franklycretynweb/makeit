@@ -3,24 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
+import { createClient } from "@/lib/supabase/client";
+import { daysUntil, formatDate } from "@/lib/utils/date";
 
-// Mock sparkline data
-const uptimeData = [
-  { v: 100 }, { v: 99.8 }, { v: 100 }, { v: 99.9 }, { v: 100 },
-  { v: 99.7 }, { v: 100 }, { v: 100 }, { v: 99.9 }, { v: 100 },
-];
-const perfData = [
-  { v: 88 }, { v: 90 }, { v: 87 }, { v: 92 }, { v: 91 },
-  { v: 93 }, { v: 90 }, { v: 94 }, { v: 93 }, { v: 94 },
-];
-const deadlineData = [
-  { v: 28 }, { v: 26 }, { v: 24 }, { v: 22 }, { v: 20 },
-  { v: 18 }, { v: 17 }, { v: 16 }, { v: 15 }, { v: 14 },
-];
-const phaseData = [
-  { v: 1 }, { v: 1 }, { v: 1 }, { v: 2 }, { v: 2 },
-  { v: 2 }, { v: 2 }, { v: 2 }, { v: 2 }, { v: 2 },
-];
+const PHASES = ["Discovery", "Design", "Development", "Review", "Launch"];
+const statusToPhaseIndex: Record<string, number> = {
+  discovery: 0,
+  design: 1,
+  development: 2,
+  review: 3,
+  launch: 4,
+  live: 4,
+};
 
 function useCountUp(end: number, duration = 1000, delay = 100) {
   const [val, setVal] = useState(0);
@@ -113,12 +107,112 @@ function StatCard({ label, sub, data, numEnd, numSuffix = "", isText, textValue 
 }
 
 export default function QuickStats() {
+  const [uptimeData, setUptimeData] = useState<{ v: number }[]>([]);
+  const [perfData, setPerfData] = useState<{ v: number }[]>([]);
+  const [deadlineData, setDeadlineData] = useState<{ v: number }[]>([]);
+  const [phaseData, setPhaseData] = useState<{ v: number }[]>([]);
+
+  const [uptimeValue, setUptimeValue] = useState("—");
+  const [perfValue, setPerfValue] = useState(0);
+  const [phaseName, setPhaseName] = useState("—");
+  const [deadlineDays, setDeadlineDays] = useState(0);
+  const [deadlineDateStr, setDeadlineDateStr] = useState("brak");
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id, status, deadline")
+        .eq("client_id", user.id)
+        .single();
+
+      if (!project) return;
+
+      // Phase & deadline from project
+      const phaseIdx = statusToPhaseIndex[project.status] ?? 1;
+      setPhaseName(PHASES[phaseIdx] ?? "—");
+      setPhaseData([{ v: phaseIdx }, { v: phaseIdx }]);
+
+      if (project.deadline) {
+        const days = daysUntil(project.deadline);
+        setDeadlineDays(Math.max(days, 0));
+        setDeadlineDateStr(formatDate(project.deadline));
+        // Simple countdown sparkline
+        const step = Math.max(days / 9, 1);
+        setDeadlineData(
+          Array.from({ length: 10 }, (_, i) => ({ v: Math.max(days + step * i - step * 9, 0) }))
+        );
+      }
+
+      // Monitoring snapshots
+      const { data: snapshots } = await supabase
+        .from("monitoring_snapshots")
+        .select("snapshot_date, uptime_status, lighthouse_perf")
+        .eq("project_id", project.id)
+        .order("snapshot_date", { ascending: false })
+        .limit(10);
+
+      if (snapshots && snapshots.length > 0) {
+        const reversed = [...snapshots].reverse();
+        setUptimeData(reversed.map((s) => ({ v: s.uptime_status * 100 })));
+        setPerfData(reversed.map((s) => ({ v: s.lighthouse_perf ?? 0 })));
+
+        const uptimePct =
+          (snapshots.filter((s) => s.uptime_status === 1).length / snapshots.length) * 100;
+        setUptimeValue(uptimePct.toFixed(1) + "%");
+        setPerfValue(snapshots[0].lighthouse_perf ?? 0);
+      } else {
+        setUptimeData([{ v: 0 }, { v: 0 }]);
+        setPerfData([{ v: 0 }, { v: 0 }]);
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="grid grid-cols-4 gap-4">
-      <StatCard label="Uptime" value="99.9%" sub="ostatnie 30 dni" data={uptimeData} numEnd={99.9} numSuffix="%" />
-      <StatCard label="Performance" value="94/100" sub="Lighthouse score" data={perfData} numEnd={94} numSuffix="/100" />
-      <StatCard label="Faza projektu" value="Design" sub="Etap 2 z 5" data={phaseData} numEnd={0} isText textValue="Design" />
-      <StatCard label="Do deadline" value="14 dni" sub="28 kwi 2026" data={deadlineData} numEnd={14} numSuffix=" dni" />
+      <StatCard
+        label="Uptime"
+        value={uptimeValue}
+        sub="ostatnie snapshoty"
+        data={uptimeData.length > 1 ? uptimeData : [{ v: 0 }, { v: 0 }]}
+        numEnd={0}
+        isText
+        textValue={uptimeValue}
+      />
+      <StatCard
+        label="Performance"
+        value={perfValue > 0 ? `${perfValue}/100` : "—"}
+        sub="Lighthouse score"
+        data={perfData.length > 1 ? perfData : [{ v: 0 }, { v: 0 }]}
+        numEnd={perfValue}
+        numSuffix="/100"
+        isText={perfValue === 0}
+        textValue="—"
+      />
+      <StatCard
+        label="Faza projektu"
+        value={phaseName}
+        sub={`Etap ${(statusToPhaseIndex[phaseName.toLowerCase()] ?? 1) + 1} z 5`}
+        data={phaseData.length > 1 ? phaseData : [{ v: 0 }, { v: 0 }]}
+        numEnd={0}
+        isText
+        textValue={phaseName}
+      />
+      <StatCard
+        label="Do deadline"
+        value={deadlineDays > 0 ? `${deadlineDays} dni` : "—"}
+        sub={deadlineDateStr}
+        data={deadlineData.length > 1 ? deadlineData : [{ v: 0 }, { v: 0 }]}
+        numEnd={deadlineDays}
+        numSuffix=" dni"
+        isText={deadlineDays === 0}
+        textValue="—"
+      />
     </div>
   );
 }

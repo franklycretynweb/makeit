@@ -22,9 +22,10 @@ interface FileCardProps {
   date: string;
   isNew?: boolean;
   preview?: string;
+  downloadUrl?: string;
 }
 
-export default function FileCard({ name, type, size, date, isNew, preview }: FileCardProps) {
+export default function FileCard({ name, type, size, date, isNew, preview, downloadUrl }: FileCardProps) {
   const label = typeLabel[type] ?? type.toUpperCase();
 
   return (
@@ -64,10 +65,17 @@ export default function FileCard({ name, type, size, date, isNew, preview }: Fil
             Podgląd
           </button>
           <span className="w-px h-3.5 bg-[#E5E5E5]" />
-          <button className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#555555] hover:text-[#111111] transition-colors duration-150">
+          <a
+            href={downloadUrl ?? "#"}
+            download={name}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-[#555555] hover:text-[#111111] transition-colors duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Download size={13} strokeWidth={1.75} />
             Pobierz
-          </button>
+          </a>
         </div>
       </div>
 

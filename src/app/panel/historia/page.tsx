@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, Palette, FileText, MessageSquare, Layers, Zap } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { getProjectForUser } from "@/lib/utils/project";
 
 type DecisionType = "approval" | "color" | "document" | "message" | "design" | "launch";
 
@@ -13,9 +15,9 @@ interface Decision {
   title: string;
   description: string;
   author: string;
-  authorInitials: string;
-  isAgency: boolean;
-  date: string;
+  author_initials: string;
+  is_agency: boolean;
+  decision_date: string;
   link?: string;
 }
 
@@ -31,65 +33,6 @@ const typeIcon: Record<DecisionType, typeof Check> = {
 
 const allFilters = ["Wszystkie", "Zatwierdzenia", "Design", "Dokumenty", "Komunikacja"] as const;
 
-const decisions: Decision[] = [
-  {
-    id: "1", type: "approval",
-    title: "Logo v3 zatwierdzone",
-    description: "Wersja 3 logo Kuchciak Budownictwo zatwierdzona przez klienta. Przekazane do wdrożenia.",
-    author: "Kuchciak Budownictwo", authorInitials: "KB", isAgency: false,
-    date: "14 kwi 2026", link: "/panel/design-review",
-  },
-  {
-    id: "2", type: "color",
-    title: "Paleta kolorów wybrana",
-    description: "Granatowy #1B3A6B jako kolor główny, pomarańczowy #F97316 jako akcent. Zatwierdzone przez obie strony.",
-    author: "Mateusz B.", authorInitials: "MB", isAgency: true,
-    date: "12 kwi 2026",
-  },
-  {
-    id: "3", type: "design",
-    title: "Mockupy 3 podstron dodane",
-    description: "Podstrony /uslugi, /o-nas, /kontakt gotowe do przeglądu w Design Review.",
-    author: "Mateusz B.", authorInitials: "MB", isAgency: true,
-    date: "11 kwi 2026", link: "/panel/design-review",
-  },
-  {
-    id: "4", type: "document",
-    title: "Kontrakt podpisany",
-    description: "Umowa na realizację strony internetowej podpisana elektronicznie przez obie strony.",
-    author: "Kuchciak Budownictwo", authorInitials: "KB", isAgency: false,
-    date: "8 kwi 2026", link: "/panel/pliki",
-  },
-  {
-    id: "5", type: "approval",
-    title: "Brief zaakceptowany",
-    description: "Brief projektowy z wymaganiami, zakresem prac i harmonogramem zatwierdzony.",
-    author: "Kuchciak Budownictwo", authorInitials: "KB", isAgency: false,
-    date: "7 kwi 2026",
-  },
-  {
-    id: "6", type: "message",
-    title: "Ustalono styl fotografii",
-    description: "Zdecydowano: zdjęcia realizacji w stylu dokumentalnym, naturalne światło, bez filtrów.",
-    author: "Mateusz B.", authorInitials: "MB", isAgency: true,
-    date: "6 kwi 2026",
-  },
-  {
-    id: "7", type: "design",
-    title: "Typografia zatwierdzona",
-    description: "Inter jako font główny, Cabinet Grotesk dla nagłówków. Hierarchia rozmiarów ustalona.",
-    author: "Mateusz B.", authorInitials: "MB", isAgency: true,
-    date: "5 kwi 2026",
-  },
-  {
-    id: "8", type: "launch",
-    title: "Projekt rozpoczęty",
-    description: "Kick-off meeting zrealizowany. Discovery phase rozpoczęta. Cele i KPI ustalone.",
-    author: "make it", authorInitials: "MI", isAgency: true,
-    date: "4 kwi 2026",
-  },
-];
-
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 12 } as const,
   animate: { opacity: 1, y: 0 } as const,
@@ -97,7 +40,25 @@ const fadeUp = (delay: number) => ({
 });
 
 export default function HistoriaPage() {
+  const [decisions, setDecisions] = useState<Decision[]>([]);
   const [filter, setFilter] = useState<(typeof allFilters)[number]>("Wszystkie");
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const project = await getProjectForUser(supabase);
+      if (!project) return;
+
+      const { data } = await supabase
+        .from("project_decisions")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("decision_date", { ascending: false });
+
+      setDecisions(data ?? []);
+    };
+    load();
+  }, []);
 
   const filtered = filter === "Wszystkie"
     ? decisions
@@ -167,7 +128,7 @@ export default function HistoriaPage() {
                       {decision.title}
                     </h3>
                     <span className="font-sans text-[11px] text-[#AAAAAA] whitespace-nowrap shrink-0 pt-0.5">
-                      {decision.date}
+                      {new Date(decision.decision_date).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
                   <p className="font-sans text-[13px] text-[#666666] leading-relaxed mb-3.5">
@@ -177,14 +138,14 @@ export default function HistoriaPage() {
                     {/* Author */}
                     <div className="flex items-center gap-2">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                        decision.isAgency
+                        decision.is_agency
                           ? "bg-[#111111]"
                           : "bg-[#F0F0F0] border border-[#E5E5E5]"
                       }`}>
                         <span className={`font-sans text-[7px] font-bold ${
-                          decision.isAgency ? "text-white" : "text-[#555555]"
+                          decision.is_agency ? "text-white" : "text-[#555555]"
                         }`}>
-                          {decision.authorInitials}
+                          {decision.author_initials}
                         </span>
                       </div>
                       <span className="font-sans text-[12px] text-[#AAAAAA]">

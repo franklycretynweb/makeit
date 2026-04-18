@@ -5,18 +5,20 @@ import { AnimatePresence } from "framer-motion";
 import HeroGreeting from "@/components/panel/dashboard/HeroGreeting";
 import ActionQueue from "@/components/panel/dashboard/ActionQueue";
 import ProjectContext from "@/components/panel/dashboard/ProjectContext";
+import MaintenanceUpsell from "@/components/panel/dashboard/MaintenanceUpsell";
+import ActivityFeed from "@/components/panel/dashboard/ActivityFeed";
 import WelcomeOverlay from "@/components/panel/onboarding/WelcomeOverlay";
 import SpotlightTour from "@/components/panel/onboarding/SpotlightTour";
 import FirstAction from "@/components/panel/onboarding/FirstAction";
+import { useActionCount } from "@/lib/context/ActionCountContext";
 
 const ONBOARDING_KEY = "makeit_onboarding_done";
 type OnboardingStep = "welcome" | "tour" | "firstAction" | null;
 
-// W produkcji — liczba pochodzi z API
-const ACTION_COUNT = 2;
-
 export default function PanelPage() {
+  const { actionCount } = useActionCount();
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
+  const [firstName, setFirstName] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -30,21 +32,39 @@ export default function PanelPage() {
     localStorage.setItem(ONBOARDING_KEY, "true");
   }, []);
 
+  const handleWelcomeContinue = useCallback((name: string) => {
+    setFirstName(name);
+    setOnboardingStep("tour");
+  }, []);
+
   return (
     <>
-      {/*
-        max-w-[720px] — celowo węższy niż reszta portalu (1060px).
-        Ten ekran ma jeden cel: jeden klik. Węższy = bardziej skupiony.
-      */}
-      <div className="max-w-[720px] flex flex-col gap-8">
-        <HeroGreeting actionCount={ACTION_COUNT} />
-        <ActionQueue />
-        <ProjectContext />
+      <div className="max-w-[1060px] flex flex-col gap-8">
+
+        {/* Greeting */}
+        <HeroGreeting actionCount={actionCount} firstName={firstName || undefined} />
+
+        {/* Two-column layout */}
+        <div className="grid grid-cols-[1fr_340px] gap-8 items-start">
+
+          {/* Left */}
+          <div className="flex flex-col gap-6">
+            <div data-tour="actions">
+              <ActionQueue />
+            </div>
+            <ProjectContext />
+            <ActivityFeed />
+          </div>
+
+          {/* Right — upsell sidebar */}
+          <MaintenanceUpsell />
+
+        </div>
       </div>
 
       <AnimatePresence>
         {onboardingStep === "welcome" && (
-          <WelcomeOverlay onContinue={() => setOnboardingStep("tour")} />
+          <WelcomeOverlay onContinue={handleWelcomeContinue} />
         )}
         {onboardingStep === "tour" && (
           <SpotlightTour onComplete={() => setOnboardingStep("firstAction")} />

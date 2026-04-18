@@ -1,86 +1,100 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 const partners = [
   {
     type: "Firmy usługowe",
     subtitle: "Lokalne i ogólnopolskie",
     description: "Restauracje, kliniki, salony, agencje, kancelarie — jeśli sprzedajesz usługi, wiemy jak zbudować Twoją obecność online.",
-    gradient: "from-[#EDE7F6] to-[#F3E8FF]",
-    blob: "#9B66FF",
     tags: ["Strony internetowe", "Social media", "Fotografia"],
+    n: "01",
   },
   {
     type: "E-commerce",
     subtitle: "Sklepy i marki produktowe",
     description: "Budujemy sklepy, które sprzedają. Dbamy o UX, zdjęcia produktowe i content, który przekonuje do zakupu.",
-    gradient: "from-[#E0F2FE] to-[#EFF6FF]",
-    blob: "#4EA8FF",
     tags: ["Sklepy online", "Sesje produktowe", "Konwersja"],
+    n: "02",
   },
   {
     type: "Marki osobiste",
     subtitle: "Twórcy i eksperci",
     description: "Coachowie, specjaliści, influencerzy — pomagamy budować markę osobistą, która przyciąga właściwych ludzi.",
-    gradient: "from-[#FFF0F0] to-[#FFF5F5]",
-    blob: "#F472B6",
     tags: ["Personal branding", "LinkedIn", "Content"],
+    n: "03",
   },
 ];
 
+const fadeUp = (delay: number) => ({
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.6, delay, ease: "easeOut" as const },
+});
+
 export default function WhoWePartnerWith() {
   return (
-    <section className="bg-white py-24 px-6">
+    <section className="bg-[#F9F9F9] py-32 px-6">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
-        <div className="text-center mb-14">
-          <h2 className="font-display font-medium text-4xl sm:text-5xl text-[#111111] mb-4">
+        <motion.div {...fadeUp(0)} className="mb-16 max-w-2xl">
+          <p className="font-sans text-[12px] font-semibold uppercase tracking-[0.15em] text-[#AAAAAA] mb-4">
+            Dla kogo
+          </p>
+          <h2 className="font-display font-medium text-[44px] sm:text-[52px] text-[#111111] tracking-[-0.04em] leading-[1.1] mb-5">
             Z kim współpracujemy
           </h2>
-          <p className="font-sans text-base text-[#666666] max-w-lg mx-auto leading-relaxed">
-            Nasze doświadczenie w designie i marketingu — dopasowane do Twojego biznesu.
+          <p className="font-sans text-[16px] text-[#666666] leading-relaxed">
+            Nasze doświadczenie w designie i marketingu —<br className="hidden sm:block" />
+            dopasowane do Twojego biznesu.
           </p>
-        </div>
+        </motion.div>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {partners.map((p, i) => (
-            <div
+            <motion.div
               key={i}
-              className={`rounded-3xl p-8 bg-gradient-to-br ${p.gradient} border border-white/60 flex flex-col gap-6 relative overflow-hidden`}
+              {...fadeUp(0.1 + i * 0.08)}
+              className="group relative rounded-[28px] bg-white border border-[#EAEAEA] p-8 flex flex-col gap-6 overflow-hidden hover:border-[#D0D0D0] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-400"
             >
-              {/* Blob decoration */}
-              <div
-                className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20 blur-2xl"
-                style={{ background: p.blob }}
-              />
+              {/* Large muted number — eye-guiding */}
+              <span className="absolute top-6 right-7 font-display text-[64px] font-bold tracking-[-0.05em] text-[#F0F0F0] leading-none select-none pointer-events-none">
+                {p.n}
+              </span>
 
               {/* Type */}
-              <div>
-                <p className="font-sans text-xs font-semibold text-[#888888] uppercase tracking-widest mb-1.5">
+              <div className="relative z-10">
+                <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-[#AAAAAA] mb-2">
                   {p.subtitle}
                 </p>
-                <h3 className="font-display font-semibold text-xl text-[#111111]">
+                <h3 className="font-display font-semibold text-[26px] text-[#111111] tracking-[-0.03em] leading-tight">
                   {p.type}
                 </h3>
               </div>
 
               {/* Description */}
-              <p className="font-sans text-sm text-[#555555] leading-relaxed">
+              <p className="font-sans text-[14px] text-[#666666] leading-relaxed relative z-10">
                 {p.description}
               </p>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2 mt-auto">
+              <div className="flex flex-wrap gap-2 mt-auto relative z-10">
                 {p.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="font-sans text-xs font-medium text-[#444444] bg-white/70 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/80"
+                    className="font-sans text-[12px] font-medium text-[#555555] bg-[#F5F5F5] border border-[#EAEAEA] px-3 py-1.5 rounded-full group-hover:border-[#D8D8D8] transition-colors duration-300"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   );
