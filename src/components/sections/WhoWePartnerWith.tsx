@@ -35,15 +35,15 @@ const fadeUp = (delay: number) => ({
 
 export default function WhoWePartnerWith() {
   return (
-    <section className="bg-[#F9F9F9] py-32 px-6">
+    <section className="bg-[#F9F9F9] py-16 md:py-32 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
-        <motion.div {...fadeUp(0)} className="mb-16 max-w-2xl">
-          <p className="font-sans text-[12px] font-semibold uppercase tracking-[0.15em] text-[#AAAAAA] mb-4">
+        <motion.div {...fadeUp(0)} className="mb-10 md:mb-16 max-w-2xl">
+          <p className="font-sans text-[12px] font-semibold uppercase tracking-[0.15em] text-[#AAAAAA] mb-3 md:mb-4">
             Dla kogo
           </p>
-          <h2 className="font-display font-medium text-[44px] sm:text-[52px] text-[#111111] tracking-[-0.04em] leading-[1.1] mb-5">
+          <h2 className="font-display font-medium text-4xl sm:text-[52px] text-[#111111] tracking-[-0.04em] leading-[1.1] mb-4 md:mb-5">
             Z kim współpracujemy
           </h2>
           <p className="font-sans text-[16px] text-[#666666] leading-relaxed">

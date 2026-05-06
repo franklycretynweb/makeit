@@ -130,12 +130,12 @@ export default function Testimonials() {
           </h2>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Cards - Mobile Swipeable Carousel / Desktop Grid */}
+        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-px-6 pb-8 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-7 flex flex-col border border-[#E8E8EA] shadow-sm"
+              className="w-[85vw] sm:w-[340px] md:w-auto shrink-0 snap-start bg-white rounded-2xl p-7 flex flex-col border border-[#E8E8EA] shadow-sm relative"
             >
               {/* Company logo */}
               <div className="mb-5">{t.logo}</div>

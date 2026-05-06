@@ -85,7 +85,7 @@ export default function Hero() {
         <motion.div {...fadeUp(0.2)} className="flex items-center gap-3 mb-8">
           <LaurelBranch />
           <span className="font-sans text-[12px] font-medium text-[#A8A29A] tracking-[0.12em] uppercase">
-            Agencja kreatywna z Warszawy
+            Agencja kreatywna z Krakowa
           </span>
           <LaurelBranch mirrored />
         </motion.div>
@@ -103,18 +103,18 @@ export default function Hero() {
 
           <motion.span
             {...fadeUp(0.35)}
-            className="font-display font-medium text-[48px] sm:text-[56px] md:text-[68px] lg:text-[76px] text-[#111111] tracking-[-0.04em] leading-[1.05] text-center"
+            className="font-display font-extrabold text-[44px] leading-[0.95] sm:text-[56px] md:text-[68px] lg:text-[84px] text-[#111111] tracking-[-0.05em] md:leading-[1.05] text-center uppercase md:normal-case"
           >
             Twój biznes jest dobry,
           </motion.span>
           <motion.div {...fadeUp(0.5)} className="relative inline-block mt-[-2px] text-center">
             <span
-              className="font-display font-medium text-[48px] sm:text-[56px] md:text-[68px] lg:text-[76px] tracking-[-0.04em] leading-[1.05] text-[#111111]"
+              className="font-display font-extrabold text-[44px] leading-[0.95] sm:text-[56px] md:text-[68px] lg:text-[84px] tracking-[-0.05em] md:leading-[1.05] text-[#111111] uppercase md:normal-case"
             >
               ale internet o tym{" "}
             </span>
             <span
-              className="font-display font-medium text-[48px] sm:text-[56px] md:text-[68px] lg:text-[76px] tracking-[-0.04em] leading-[1.05] gradient-text relative z-10"
+              className="font-display font-extrabold text-[44px] leading-[0.95] sm:text-[56px] md:text-[68px] lg:text-[84px] tracking-[-0.05em] md:leading-[1.05] gradient-text relative z-10 uppercase md:normal-case"
             >
               nie wie.
               {/* The animated swoosh matching the gradient */}
@@ -148,18 +148,11 @@ export default function Hero() {
           <RotatingSubline />
         </motion.div>
 
-        {/* CTAs - Refined to match Drewl (smaller, better shadows/borders) */}
-        <motion.div {...fadeUp(0.8)} className="flex items-center justify-center gap-4 mb-16 z-10">
-          <a
-            href="#dlaczego-make-it"
-            className="group relative inline-flex h-[44px] items-center justify-center overflow-hidden rounded-full bg-white px-6 font-sans text-[14px] font-medium text-[#111111] transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-[#E5E5E5] hover:border-[#D0D0D0] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
-          >
-            <span className="relative z-10">Dlaczego Make it?</span>
-          </a>
-
+        {/* CTAs - Refined to match Webhero (massive on mobile, stacked, full width) */}
+        <motion.div {...fadeUp(0.8)} className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 w-full max-w-[90%] sm:max-w-[80%] md:max-w-none mx-auto mb-10 md:mb-16 z-10">
           <a
             href="/pakiety"
-            className="group relative inline-flex h-[44px] items-center justify-center overflow-hidden rounded-full bg-[#111111] px-6 font-sans text-[14px] font-medium text-white transition-all duration-300 shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:bg-[#000000]"
+            className="w-full sm:w-auto group relative inline-flex h-[60px] md:h-[52px] items-center justify-center overflow-hidden rounded-[20px] md:rounded-full bg-[#111111] border-2 border-[#111111] px-8 font-sans text-[17px] md:text-[15px] font-semibold text-white transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:bg-[#000000]"
           >
             <span className="relative z-10">Zacznij projekt</span>
             {/* Subtle highlight overlay on hover */}
@@ -167,6 +160,55 @@ export default function Hero() {
               <div className="relative h-full w-8 bg-white/20" />
             </div>
           </a>
+
+          <a
+            href="#dlaczego-make-it"
+            className="w-full sm:w-auto group relative inline-flex h-[60px] md:h-[52px] items-center justify-center overflow-hidden rounded-[20px] md:rounded-full bg-white px-8 font-sans text-[17px] md:text-[15px] font-semibold text-[#111111] transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border-2 border-[#E5E5E5] hover:border-[#111111] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)]"
+          >
+            <span className="relative z-10">Dlaczego Make it?</span>
+          </a>
+        </motion.div>
+
+        {/* Social Proof Badges immediately below CTAs (Webhero style) */}
+        <motion.div {...fadeUp(0.9)} className="flex items-center justify-center gap-6 sm:gap-12 w-full mb-12 md:mb-0 z-10">
+          {/* Badge 1 */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-display font-bold text-[#111111] text-[18px] md:text-[20px] leading-none tracking-tight flex items-center gap-1">
+              Clutch
+            </span>
+            <div className="flex gap-0.5 text-[#FFB800] text-[12px] md:text-[14px]">
+              ★★★★★
+            </div>
+            <span className="font-sans text-[10px] md:text-[11px] font-semibold text-[#666666] tracking-wide uppercase mt-0.5">
+              5.0 Rating
+            </span>
+          </div>
+
+          {/* Badge 2 */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-display font-bold text-[#111111] text-[18px] md:text-[20px] leading-none tracking-tight">
+              Google
+            </span>
+            <div className="flex gap-0.5 text-[#FFB800] text-[12px] md:text-[14px]">
+              ★★★★★
+            </div>
+            <span className="font-sans text-[10px] md:text-[11px] font-semibold text-[#666666] tracking-wide uppercase mt-0.5">
+              5.0 Rating
+            </span>
+          </div>
+
+          {/* Badge 3 */}
+          <div className="flex flex-col items-center gap-1 hidden sm:flex">
+            <span className="font-display font-bold text-[#111111] text-[18px] md:text-[20px] leading-none tracking-tight">
+              Trustpilot
+            </span>
+            <div className="flex gap-0.5 text-[#00B67A] text-[12px] md:text-[14px]">
+              ★★★★★
+            </div>
+            <span className="font-sans text-[10px] md:text-[11px] font-semibold text-[#666666] tracking-wide uppercase mt-0.5">
+              5.0 Rating
+            </span>
+          </div>
         </motion.div>
       </div>
 

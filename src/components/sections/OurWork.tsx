@@ -58,13 +58,13 @@ const projects = [
 export default function OurWork() {
 
   return (
-    <section className="bg-[#F9F9F9] py-32 px-6 relative overflow-hidden">
+    <section className="bg-[#F9F9F9] py-16 md:py-32 px-4 md:px-6 relative overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header - Zoptymalizowany pod kątem wielkości i detali (Technical Brutalism) */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 md:gap-8">
           <div className="max-w-2xl">
             <h2
-              className="font-sans font-semibold text-4xl md:text-5xl lg:text-6xl text-[#111111] leading-[1.05] tracking-[-0.04em] mb-5"
+              className="font-sans font-semibold text-[36px] md:text-5xl lg:text-6xl text-[#111111] leading-[1.05] tracking-[-0.04em] mb-3 md:mb-5"
             >
               Nasze realizacje.
             </h2>
@@ -98,14 +98,14 @@ export default function OurWork() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-16 gap-x-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-y-16 gap-x-8 items-start">
           {projects.map((p, i) => (
             <div
               key={i}
               className={`group flex flex-col ${p.width === 2 ? 'md:col-span-2' : 'md:col-span-1'}`}
             >
               {/* Image Container */}
-              <div className="relative w-full rounded-[32px] bg-[#F9F9F9] overflow-hidden mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-500 transform group-hover:-translate-y-2">
+              <div className="relative w-full rounded-[24px] md:rounded-[32px] bg-[#F9F9F9] overflow-hidden mb-5 md:mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-500 transform group-hover:-translate-y-2">
                 <Image
                   src={p.image}
                   alt={p.name}
