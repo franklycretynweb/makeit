@@ -104,7 +104,7 @@ export default function OurWork() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-y-16 gap-x-8 items-start">
-          {projects.map((p, i) => {
+          {projects.map((p) => {
             const content = (
               <>
                 {/* Image Container */}
@@ -155,14 +155,21 @@ export default function OurWork() {
 
             if (p.href) {
               return (
-                <Link key={i} href={p.href} target="_blank" rel="noopener noreferrer" className={className}>
+                <Link
+                  key={p.name}
+                  href={p.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Zobacz projekt ${p.name} (otwiera się w nowej karcie)`}
+                  className={className}
+                >
                   {content}
                 </Link>
               );
             }
 
             return (
-              <div key={i} className={className}>
+              <div key={p.name} className={className}>
                 {content}
               </div>
             );
